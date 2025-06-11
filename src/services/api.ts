@@ -1,0 +1,80 @@
+import axios from 'axios';
+
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000/api';
+
+const api = axios.create({
+  baseURL: API_URL,
+  headers: {
+    'Content-Type': 'application/json',
+  },
+});
+
+export interface Parking {
+  id: string;
+  name: string;
+  address: string;
+  latitude: number;
+  longitude: number;
+  totalSpaces: number;
+  availableSpaces: number;
+  pricePerHour: number;
+  images: string[];
+  amenities: string[];
+}
+
+export interface Reservation {
+  id: string;
+  parkingId: string;
+  startTime: string;
+  endTime: string;
+  status: 'pending' | 'confirmed' | 'cancelled';
+  totalPrice: number;
+}
+
+export const parkingService = {
+  // Obtener todos los estacionamientos
+  getAllParkings: async (): Promise<Parking[]> => {
+    const response = await api.get('/parkings');
+    return response.data;
+  },
+
+  // Obtener estacionamientos cercanos
+  getNearbyParkings: async (latitude: number, longitude: number, radius: number): Promise<Parking[]> => {
+    const response = await api.get('/parkings/nearby', {
+      params: { latitude, longitude, radius },
+    });
+    return response.data;
+  },
+
+  // Obtener un estacionamiento por ID
+  getParkingById: async (id: string): Promise<Parking> => {
+    const response = await api.get(`/parkings/${id}`);
+    return response.data;
+  },
+
+  // Registrar un nuevo estacionamiento
+  registerParking: async (parkingData: Omit<Parking, 'id'>): Promise<Parking> => {
+    const response = await api.post('/parkings', parkingData);
+    return response.data;
+  },
+
+  // Crear una reserva
+  createReservation: async (reservationData: Omit<Reservation, 'id' | 'status'>): Promise<Reservation> => {
+    const response = await api.post('/reservations', reservationData);
+    return response.data;
+  },
+
+  // Obtener reservas de un usuario
+  getUserReservations: async (): Promise<Reservation[]> => {
+    const response = await api.get('/reservations/user');
+    return response.data;
+  },
+
+  // Cancelar una reserva
+  cancelReservation: async (id: string): Promise<Reservation> => {
+    const response = await api.patch(`/reservations/${id}/cancel`);
+    return response.data;
+  },
+};
+
+export default parkingService; 
