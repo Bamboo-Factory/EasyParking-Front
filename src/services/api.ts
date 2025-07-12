@@ -1,6 +1,6 @@
 import axios from 'axios';
 
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000/api';
+const API_URL = import.meta.env.VITE_API_URL || 'https://localhost:7041/api';
 
 const api = axios.create({
   baseURL: API_URL,
@@ -17,7 +17,7 @@ export interface Parking {
   longitude: number;
   totalSpaces: number;
   availableSpaces: number;
-  pricePerHour: number;
+  hourlyRate: number;
   images: string[];
   amenities: string[];
 }
@@ -33,15 +33,15 @@ export interface Reservation {
 
 export const parkingService = {
   // Obtener todos los estacionamientos
-  getAllParkings: async (): Promise<Parking[]> => {
-    const response = await api.get('/parkings');
+  getAllAvailableParkings: async (): Promise<Parking[]> => {
+    const response = await api.get('/Parkings/available');
     return response.data;
   },
 
   // Obtener estacionamientos cercanos
-  getNearbyParkings: async (latitude: number, longitude: number, radius: number): Promise<Parking[]> => {
-    const response = await api.get('/parkings/nearby', {
-      params: { latitude, longitude, radius },
+  getNearbyParkings: async (latitude: number, longitude: number, radiusKm: number): Promise<Parking[]> => {
+    const response = await api.get('/Parkings/search/location', {
+      params: { latitude, longitude, radiusKm },
     });
     return response.data;
   },

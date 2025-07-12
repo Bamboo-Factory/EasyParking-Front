@@ -16,7 +16,8 @@ function App() {
           <Navbar />
           <main className="container mx-auto px-4 py-8">
             <Routes>
-              <Route path="/" element={<Home />} />
+              <Route path="/" element={<ParkingList />} />
+              <Route path="/home" element={<Home />} />
               <Route path="/parkings" element={<ParkingList />} />
               <Route path="/register-parking" element={<ParkingRegister />} />
               <Route path="/reservation/:id" element={<ParkingReservation />} />
