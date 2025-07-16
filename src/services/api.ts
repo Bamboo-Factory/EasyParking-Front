@@ -101,6 +101,12 @@ export const parkingService = {
     const response = await api.patch(`/reservations/${id}/cancel`);
     return response.data;
   },
+
+  // Obtener todas las reservaciones (admin/general)
+  getAllReservations: async (): Promise<Reservation[]> => {
+    const response = await api.get("/reservations");
+    return response.data;
+  },
 };
 
 export { api };

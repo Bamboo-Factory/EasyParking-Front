@@ -1,19 +1,23 @@
-import { useEffect } from 'react';
-import type { ReactNode } from 'react';
-import { useNavigate, useLocation } from 'react-router-dom';
-import { useAuth } from '../../contexts/AuthContext';
-import AuthRequiredMessage from '../molecules/AuthRequiredMessage';
+import { useEffect } from "react";
+import type { ReactNode } from "react";
+import { useNavigate, useLocation } from "react-router-dom";
+import { useAuth } from "../../contexts/AuthContext";
+import AuthRequiredMessage from "../molecules/AuthRequiredMessage";
 
 interface ProtectedRouteProps {
   children: ReactNode;
   redirectTo?: string;
+  requireAdmin?: boolean;
 }
 
-const ProtectedRoute = ({ children, redirectTo = '/login' }: ProtectedRouteProps) => {
-  const { isAuthenticated } = useAuth();
+const ProtectedRoute = ({
+  children,
+  redirectTo = "/login",
+  requireAdmin = false,
+}: ProtectedRouteProps) => {
+  const { isAuthenticated, isAdmin } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
-
 
   if (!isAuthenticated) {
     return (
@@ -26,7 +30,18 @@ const ProtectedRoute = ({ children, redirectTo = '/login' }: ProtectedRouteProps
     );
   }
 
+  if (requireAdmin && !isAdmin) {
+    return (
+      <AuthRequiredMessage
+        title="Acceso denegado"
+        message="Necesitas permisos de administrador para acceder a esta sección."
+        actionText="Ir al inicio"
+        actionLink="/"
+      />
+    );
+  }
+
   return <>{children}</>;
 };
 
-export default ProtectedRoute; 
+export default ProtectedRoute;
