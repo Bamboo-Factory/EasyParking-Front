@@ -24,11 +24,19 @@ export interface Parking {
 
 export interface Reservation {
   id: string;
+  userId: string;
   parkingId: string;
   startTime: string;
   endTime: string;
   status: 'pending' | 'confirmed' | 'cancelled';
-  totalPrice: number;
+  totalAmount: number;
+  parkingSpace: ParkingSpace;
+}
+
+export interface ParkingSpace {
+  id: string;
+  spaceNumber: string;
+  isAvailable: boolean;
 }
 
 export const parkingService = {
@@ -48,7 +56,7 @@ export const parkingService = {
 
   // Obtener un estacionamiento por ID
   getParkingById: async (id: string): Promise<Parking> => {
-    const response = await api.get(`/parkings/${id}`);
+    const response = await api.get(`/Parkings/${id}`);
     return response.data;
   },
 
@@ -59,7 +67,7 @@ export const parkingService = {
   },
 
   // Crear una reserva
-  createReservation: async (reservationData: Omit<Reservation, 'id' | 'status'>): Promise<Reservation> => {
+  createReservation: async (reservationData: Omit<Reservation, 'id' | 'status' | 'parkingSpace'>): Promise<Reservation> => {
     const response = await api.post('/reservations', reservationData);
     return response.data;
   },

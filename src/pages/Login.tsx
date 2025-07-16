@@ -1,9 +1,10 @@
 import { useState } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
+import { useNavigate, Link, useLocation } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 
 const Login = () => {
   const navigate = useNavigate();
+  const location = useLocation();
   const { login } = useAuth();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -27,7 +28,9 @@ const Login = () => {
 
     try {
       await login(formData);
-      navigate('/');
+      // Redirigir a la página desde donde vino el usuario, o a la página principal
+      const from = location.state?.from || '/';
+      navigate(from, { replace: true });
     } catch (err) {
       setError('Error al iniciar sesión. Por favor, verifica tus credenciales.');
     } finally {

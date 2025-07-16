@@ -1,29 +1,46 @@
 import { useState, useEffect } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { MapContainer, TileLayer, Marker } from 'react-leaflet';
 import { ClockIcon, MapPinIcon, CurrencyDollarIcon } from '@heroicons/react/24/outline';
 import { parkingService } from '../services/api';
 import type { Parking } from '../services/api';
+import { useAuth } from '../contexts/AuthContext';
+import ProtectedRoute from '../components/atoms/ProtectedRoute';
+import LoadingSpinner from '../components/atoms/LoadingSpinner';
+import ErrorMessage from '../components/atoms/ErrorMessage';
+import SuccessMessage from '../components/atoms/SuccessMessage';
 import 'leaflet/dist/leaflet.css';
-import { mockParkingSpots } from '../mocks/parkingData';
 
 const ParkingReservation = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
+  const location = useLocation();
+  const { user } = useAuth();
   const [parking, setParking] = useState<Parking | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [successMessage, setSuccessMessage] = useState<string | null>(null);
   const [formData, setFormData] = useState({
     startTime: '',
     endTime: '',
   });
 
+  // Redirigir al login si no hay usuario autenticado
+  useEffect(() => {
+    if (!user) {
+      navigate('/login', { 
+        state: { from: location.pathname },
+        replace: true 
+      });
+    }
+  }, [user, navigate, location.pathname]);
+
   useEffect(() => {
     const fetchParking = async () => {
       try {
         if (!id) throw new Error('ID no proporcionado');
-        // const data = await parkingService.getParkingById(id);
-        const data = mockParkingSpots.find(parking => parking.id === id);
+        const data = await parkingService.getParkingById(id);
+        
         setParking(data);
       } catch (err) {
         setError('Error al cargar la información del estacionamiento');
@@ -53,22 +70,38 @@ const ParkingReservation = () => {
 
   const calculateTotalPrice = () => {
     if (!parking) return 0;
-    return calculateTotalHours() * parking.pricePerHour;
+    return calculateTotalHours() * parking.hourlyRate;
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!parking || !id) return;
+    if (!parking || !id || !user) return;
 
     try {
       setLoading(true);
-      await parkingService.createReservation({
+      setError(null);
+      setSuccessMessage(null);
+      
+      const reservation = await parkingService.createReservation({
+        userId: user.id,
         parkingId: id,
         startTime: formData.startTime,
         endTime: formData.endTime,
-        totalPrice: calculateTotalPrice(),
+        totalAmount: calculateTotalPrice(),
       });
-      navigate('/parkings');
+
+      // Mostrar mensaje de éxito con el número del espacio
+      if (reservation.parkingSpace && reservation.parkingSpace.spaceNumber) {
+        const spaceNumber = reservation.parkingSpace.spaceNumber;
+        setSuccessMessage(`¡Reserva creada exitosamente! Tu espacio asignado es: ${spaceNumber}. Serás redirigido en 3 segundos...`);
+      } else {
+        setSuccessMessage('¡Reserva creada exitosamente! Serás redirigido en 3 segundos...');
+      }
+      
+      // Redirigir después de 5 segundos para que el usuario vea el mensaje
+      setTimeout(() => {
+        navigate('/parkings');
+      }, 5000);
     } catch (err) {
       setError('Error al crear la reserva');
     } finally {
@@ -77,26 +110,23 @@ const ParkingReservation = () => {
   };
 
   if (loading) {
-    return (
-      <div className="flex justify-center items-center h-64">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600"></div>
-      </div>
-    );
+    return <LoadingSpinner />;
   }
 
   if (error || !parking) {
-    return (
-      <div className="text-center text-red-600 p-4">
-        {error || 'Estacionamiento no encontrado'}
-      </div>
-    );
+    return <ErrorMessage message={error || 'Estacionamiento no encontrado'} />;
+  }
+
+  if (!user) {
+    return null;
   }
 
   return (
-    <div className="max-w-4xl mx-auto space-y-8">
-      <h1 className="text-3xl font-bold text-gray-900">
-        Reservar Estacionamiento
-      </h1>
+    <ProtectedRoute>
+      <div className="max-w-4xl mx-auto space-y-8">
+        <h1 className="text-3xl font-bold text-gray-900">
+          Reservar Estacionamiento
+        </h1>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
         {/* Información del estacionamiento */}
@@ -115,7 +145,7 @@ const ParkingReservation = () => {
               <div className="flex items-center space-x-3">
                 <CurrencyDollarIcon className="h-5 w-5 text-gray-400" />
                 <p className="text-gray-600">
-                  S/ {parking.pricePerHour} por hora
+                  S/ {parking.hourlyRate} por hora
                 </p>
               </div>
 
@@ -127,7 +157,7 @@ const ParkingReservation = () => {
               </div>
             </div>
 
-            {parking.amenities.length > 0 && (
+            {/* {parking.amenities.length > 0 && (
               <div className="mt-6">
                 <h3 className="text-sm font-medium text-gray-700 mb-2">
                   Servicios y Amenidades
@@ -143,7 +173,7 @@ const ParkingReservation = () => {
                   ))}
                 </div>
               </div>
-            )}
+            )} */}
           </div>
 
           <div className="h-[300px] rounded-lg overflow-hidden shadow-md">
@@ -166,6 +196,12 @@ const ParkingReservation = () => {
           <h2 className="text-xl font-semibold text-gray-900 mb-6">
             Detalles de la Reserva
           </h2>
+          
+          <div className="mb-4 p-3 bg-blue-50 border border-blue-200 rounded-md">
+            <p className="text-sm text-blue-700">
+              <strong>Usuario:</strong> {user.name} ({user.email})
+            </p>
+          </div>
 
           <form onSubmit={handleSubmit} className="space-y-6">
             <div>
@@ -215,6 +251,10 @@ const ParkingReservation = () => {
               </div>
             )}
 
+            {successMessage && (
+              <SuccessMessage message={successMessage} />
+            )}
+
             <div className="flex justify-end space-x-4">
               <button
                 type="button"
@@ -225,7 +265,7 @@ const ParkingReservation = () => {
               </button>
               <button
                 type="submit"
-                disabled={loading || !formData.startTime || !formData.endTime}
+                disabled={loading || !formData.startTime || !formData.endTime || !user}
                 className="btn btn-primary"
               >
                 {loading ? 'Procesando...' : 'Confirmar Reserva'}
@@ -235,6 +275,7 @@ const ParkingReservation = () => {
         </div>
       </div>
     </div>
+    </ProtectedRoute>
   );
 };
 
