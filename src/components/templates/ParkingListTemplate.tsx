@@ -1,7 +1,8 @@
-import PageTitle from '../atoms/PageTitle';
-import ParkingMap from '../organisms/ParkingMap';
-import ParkingList from '../organisms/ParkingList';
-import type { Parking } from '../../services/api';
+import PageTitle from "../atoms/PageTitle";
+import ParkingMap from "../organisms/ParkingMap";
+import ParkingList from "../organisms/ParkingList";
+import type { Parking } from "../../services/api";
+import UserReservationsList from "./UserReservationsList";
 
 interface ParkingListTemplateProps {
   parkings: Parking[];
@@ -11,12 +12,12 @@ interface ParkingListTemplateProps {
   onPageChange: (page: number) => void;
 }
 
-const ParkingListTemplate = ({ 
-  parkings, 
-  userLocation, 
-  currentPage, 
-  totalPages, 
-  onPageChange 
+const ParkingListTemplate = ({
+  parkings,
+  userLocation,
+  currentPage,
+  totalPages,
+  onPageChange,
 }: ParkingListTemplateProps) => {
   return (
     <div className="space-y-6">
@@ -27,15 +28,17 @@ const ParkingListTemplate = ({
         <ParkingMap parkings={parkings} userLocation={userLocation} />
 
         {/* Lista de estacionamientos */}
-        <ParkingList 
+        <ParkingList
           parkings={parkings}
           currentPage={currentPage}
           totalPages={totalPages}
           onPageChange={onPageChange}
         />
       </div>
+      {/* Reservaciones del usuario */}
+      <UserReservationsList />
     </div>
   );
 };
 
-export default ParkingListTemplate; 
+export default ParkingListTemplate;

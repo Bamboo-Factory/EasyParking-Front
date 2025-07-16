@@ -1,1 +1,1 @@
-export { default as ParkingListTemplate } from './ParkingListTemplate'; 
+export { default as ParkingListTemplate } from "./ParkingListTemplate";

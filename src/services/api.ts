@@ -31,6 +31,8 @@ export interface Reservation {
   status: "pending" | "confirmed" | "cancelled";
   totalAmount: number;
   parkingSpace: ParkingSpace;
+  paymentStatus?: string;
+  notes?: string;
 }
 
 export interface ParkingSpace {
@@ -83,6 +85,14 @@ export const parkingService = {
   // Obtener reservas de un usuario
   getUserReservations: async (): Promise<Reservation[]> => {
     const response = await api.get("/reservations/user");
+    return response.data;
+  },
+
+  // Obtener reservas de un usuario por ID
+  getReservationsByUserId: async (
+    userId: string | number
+  ): Promise<Reservation[]> => {
+    const response = await api.get(`/reservations/user/${userId}`);
     return response.data;
   },
 
