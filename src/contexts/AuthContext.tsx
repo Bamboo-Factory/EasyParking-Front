@@ -1,7 +1,11 @@
-import { createContext, useContext, useState, useEffect } from 'react';
-import type { ReactNode } from 'react';
-import { authService } from '../services/auth';
-import type { User, LoginCredentials, RegisterCredentials } from '../services/auth';
+import { createContext, useContext, useState, useEffect } from "react";
+import type { ReactNode } from "react";
+import { authService } from "../services/auth";
+import type {
+  User,
+  LoginCredentials,
+  RegisterCredentials,
+} from "../services/auth";
 
 interface AuthContextType {
   user: User | null;
@@ -26,9 +30,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const login = async (credentials: LoginCredentials) => {
-    const { user } = await authService.login(credentials);
-    setUser(user);
-    setIsAuthenticated(true);
+    try {
+      const { user } = await authService.login(credentials);
+      setUser(user);
+      setIsAuthenticated(true);
+    } catch (error) {
+      setUser(null);
+      setIsAuthenticated(false);
+      throw error;
+    }
   };
 
   const register = async (credentials: RegisterCredentials) => {
@@ -44,7 +54,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   return (
-    <AuthContext.Provider value={{ user, isAuthenticated, login, register, logout }}>
+    <AuthContext.Provider
+      value={{ user, isAuthenticated, login, register, logout }}
+    >
       {children}
     </AuthContext.Provider>
   );
@@ -53,7 +65,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 export function useAuth() {
   const context = useContext(AuthContext);
   if (context === undefined) {
-    throw new Error('useAuth debe ser usado dentro de un AuthProvider');
+    throw new Error("useAuth debe ser usado dentro de un AuthProvider");
   }
   return context;
-} 
+}

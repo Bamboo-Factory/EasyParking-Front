@@ -1,11 +1,11 @@
-import axios from 'axios';
+import axios from "axios";
 
-const API_URL = import.meta.env.VITE_API_URL || 'https://localhost:7041/api';
+const API_URL = import.meta.env.VITE_API_URL || "https://localhost:7041/api";
 
 const api = axios.create({
   baseURL: API_URL,
   headers: {
-    'Content-Type': 'application/json',
+    "Content-Type": "application/json",
   },
 });
 
@@ -28,7 +28,7 @@ export interface Reservation {
   parkingId: string;
   startTime: string;
   endTime: string;
-  status: 'pending' | 'confirmed' | 'cancelled';
+  status: "pending" | "confirmed" | "cancelled";
   totalAmount: number;
   parkingSpace: ParkingSpace;
 }
@@ -42,13 +42,17 @@ export interface ParkingSpace {
 export const parkingService = {
   // Obtener todos los estacionamientos
   getAllAvailableParkings: async (): Promise<Parking[]> => {
-    const response = await api.get('/Parkings/available');
+    const response = await api.get("/Parkings/available");
     return response.data;
   },
 
   // Obtener estacionamientos cercanos
-  getNearbyParkings: async (latitude: number, longitude: number, radiusKm: number): Promise<Parking[]> => {
-    const response = await api.get('/Parkings/search/location', {
+  getNearbyParkings: async (
+    latitude: number,
+    longitude: number,
+    radiusKm: number
+  ): Promise<Parking[]> => {
+    const response = await api.get("/Parkings/search/location", {
       params: { latitude, longitude, radiusKm },
     });
     return response.data;
@@ -61,20 +65,24 @@ export const parkingService = {
   },
 
   // Registrar un nuevo estacionamiento
-  registerParking: async (parkingData: Omit<Parking, 'id'>): Promise<Parking> => {
-    const response = await api.post('/parkings', parkingData);
+  registerParking: async (
+    parkingData: Omit<Parking, "id">
+  ): Promise<Parking> => {
+    const response = await api.post("/parkings", parkingData);
     return response.data;
   },
 
   // Crear una reserva
-  createReservation: async (reservationData: Omit<Reservation, 'id' | 'status' | 'parkingSpace'>): Promise<Reservation> => {
-    const response = await api.post('/reservations', reservationData);
+  createReservation: async (
+    reservationData: Omit<Reservation, "id" | "status" | "parkingSpace">
+  ): Promise<Reservation> => {
+    const response = await api.post("/reservations", reservationData);
     return response.data;
   },
 
   // Obtener reservas de un usuario
   getUserReservations: async (): Promise<Reservation[]> => {
-    const response = await api.get('/reservations/user');
+    const response = await api.get("/reservations/user");
     return response.data;
   },
 
@@ -85,4 +93,6 @@ export const parkingService = {
   },
 };
 
-export default parkingService; 
+export { api };
+
+export default parkingService;
