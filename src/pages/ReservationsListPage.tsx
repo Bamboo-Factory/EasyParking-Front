@@ -138,25 +138,24 @@ const ReservationsListPage = () => {
             <table className="min-w-full bg-white border border-gray-200 rounded-lg">
               <thead>
                 <tr className="bg-gray-100">
-                  <th className="px-4 py-2 text-left">Identificador</th>
-                  <th className="px-4 py-2 text-left">ID de usuario</th>
-                  <th className="px-4 py-2 text-left">Fecha de inicio</th>
-                  <th className="px-4 py-2 text-left">Fecha fin</th>
-                  <th className="px-4 py-2 text-left">Hora de inicio</th>
+                  <th className="px-4 py-2 text-left">Estacionamiento</th>
+                  <th className="px-4 py-2 text-left">Ubicacion</th>
+                  <th className="px-4 py-2 text-left">Usuario</th>
+                  <th className="px-4 py-2 text-left">Inicio</th>
+                  <th className="px-4 py-2 text-left">Fin</th>
                   <th className="px-4 py-2 text-left">Monto total</th>
                   <th className="px-4 py-2 text-left">Estado</th>
                   <th className="px-4 py-2 text-left">Pagado</th>
-                  <th className="px-4 py-2 text-left">Notas</th>
                 </tr>
               </thead>
               <tbody>
                 {filtered.map((r) => (
                   <tr key={r.id} className="border-t">
-                    <td className="px-4 py-2">{r.id}</td>
-                    <td className="px-4 py-2">{r.userId}</td>
-                    <td className="px-4 py-2">{formatDate(r.startTime)}</td>
-                    <td className="px-4 py-2">{formatDate(r.endTime)}</td>
-                    <td className="px-4 py-2">{formatTime(r.startTime)}</td>
+                    <td className="px-4 py-2">{r.parking.name}</td>
+                    <td className="px-4 py-2">{r.parkingSpace.spaceNumber}</td>
+                    <td className="px-4 py-2">{r.user.firstName} {r.user.lastName}</td>
+                    <td className="px-4 py-2">{formatDate(r.startTime)} {formatTime(r.startTime)}</td>
+                    <td className="px-4 py-2">{formatDate(r.endTime)} {formatTime(r.endTime)}</td>
                     <td className="px-4 py-2">S/ {r.totalAmount.toFixed(2)}</td>
                     <td className="px-4 py-2">
                       {estadoLabels[r.status?.toLowerCase()] || r.status}
@@ -167,7 +166,6 @@ const ReservationsListPage = () => {
                           r.paymentStatus
                         : "No"}
                     </td>
-                    <td className="px-4 py-2">{r.notes || "-"}</td>
                   </tr>
                 ))}
               </tbody>

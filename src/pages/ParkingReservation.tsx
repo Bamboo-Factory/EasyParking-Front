@@ -2,8 +2,8 @@ import { useState, useEffect } from 'react';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { MapContainer, TileLayer, Marker } from 'react-leaflet';
 import { ClockIcon, MapPinIcon, CurrencyDollarIcon } from '@heroicons/react/24/outline';
-import { parkingService } from '../services/api';
-import type { Parking } from '../services/api';
+import { parkingService, userService } from '../services/api';
+import type { Parking, User } from '../services/api';
 import { useAuth } from '../contexts/AuthContext';
 import ProtectedRoute from '../components/atoms/ProtectedRoute';
 import LoadingSpinner from '../components/atoms/LoadingSpinner';
@@ -24,6 +24,11 @@ const ParkingReservation = () => {
     startTime: '',
     endTime: '',
   });
+  const [selectedUser, setSelectedUser] = useState<User | null>(null);
+  const [userSearch, setUserSearch] = useState('');
+  const [userOptions, setUserOptions] = useState<User[]>([]);
+  const [userLoading, setUserLoading] = useState(false);
+  const [allUsers, setAllUsers] = useState<User[]>([]);
 
   // Redirigir al login si no hay usuario autenticado
   useEffect(() => {
@@ -51,6 +56,35 @@ const ParkingReservation = () => {
 
     fetchParking();
   }, [id]);
+
+  // Cargar todos los usuarios si el rol es admin
+  useEffect(() => {
+    if (user?.role === 'Admin') {
+      const fetchUsers = async () => {
+        try {
+          const users = await userService.getAllUsers();
+          setAllUsers(users);
+        } catch (err) {
+          console.error('Error al cargar usuarios:', err);
+        }
+      };
+      fetchUsers();
+    }
+  }, [user]);
+
+  // Filtrar usuarios basado en la búsqueda
+  useEffect(() => {
+    if (user?.role === 'Admin' && userSearch.length > 0) {
+      const filtered = allUsers.filter((u: User) =>
+        u.firstName.toLowerCase().includes(userSearch.toLowerCase()) ||
+        u.lastName.toLowerCase().includes(userSearch.toLowerCase()) ||
+        u.email.toLowerCase().includes(userSearch.toLowerCase())
+      );
+      setUserOptions(filtered);
+    } else {
+      setUserOptions([]);
+    }
+  }, [userSearch, allUsers, user]);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
@@ -81,9 +115,9 @@ const ParkingReservation = () => {
       setLoading(true);
       setError(null);
       setSuccessMessage(null);
-      
+      const userIdToReserve = user.role === 'Admin' && selectedUser ? selectedUser.id : user.id;
       const reservation = await parkingService.createReservation({
-        userId: user.id,
+        userId: userIdToReserve,
         parkingId: id,
         startTime: formData.startTime,
         endTime: formData.endTime,
@@ -100,7 +134,11 @@ const ParkingReservation = () => {
       
       // Redirigir después de 5 segundos para que el usuario vea el mensaje
       setTimeout(() => {
-        navigate('/parkings');
+        if (user.role === 'Admin') {
+          navigate('/reservations');
+        } else {
+          navigate('/parkings');
+        }
       }, 5000);
     } catch (err) {
       setError('Error al crear la reserva');
@@ -152,7 +190,7 @@ const ParkingReservation = () => {
               <div className="flex items-center space-x-3">
                 <ClockIcon className="h-5 w-5 text-gray-400" />
                 <p className="text-gray-600">
-                  {parking.availableSpaces} espacios disponibles
+                  {parking.totalSpaces} espacios totales
                 </p>
               </div>
             </div>
@@ -196,14 +234,45 @@ const ParkingReservation = () => {
           <h2 className="text-xl font-semibold text-gray-900 mb-6">
             Detalles de la Reserva
           </h2>
-          
-          <div className="mb-4 p-3 bg-blue-50 border border-blue-200 rounded-md">
-            <p className="text-sm text-blue-700">
-              <strong>Usuario:</strong> {user.name} ({user.email})
-            </p>
-          </div>
 
           <form onSubmit={handleSubmit} className="space-y-6">
+            {user.role === 'Admin' && (
+              <div className="mb-4">
+                <label className="block text-sm font-medium text-gray-700 mb-1">Buscar usuario</label>
+                <input
+                  type="text"
+                  className="input w-full"
+                  placeholder="Escribe el nombre del usuario..."
+                  value={userSearch}
+                  onChange={e => {
+                    setUserSearch(e.target.value);
+                    setSelectedUser(null);
+                  }}
+                />
+                {userLoading && <div className="text-xs text-gray-500 mt-1">Buscando...</div>}
+                {userOptions.length > 0 && (
+                  <ul className="border rounded bg-white mt-1 max-h-40 overflow-y-auto shadow z-10">
+                    {userOptions.map(option => (
+                      <li
+                        key={option.id}
+                        className={`px-3 py-2 cursor-pointer hover:bg-primary-100 ${selectedUser?.id === option.id ? 'bg-primary-200' : ''}`}
+                        onClick={() => {
+                          setSelectedUser(option);
+                          setUserSearch(`${option.firstName} ${option.lastName}`);
+                          setUserOptions([]);
+                        }}
+                      >
+                        {option.firstName} {option.lastName} <span className="text-xs text-gray-500">({option.email})</span>
+                      </li>
+                    ))}
+                  </ul>
+                )}
+                {selectedUser && (
+                  <div className="text-xs text-green-600 mt-1">Usuario seleccionado: {selectedUser.firstName} {selectedUser.lastName} ({selectedUser.email})</div>
+                )}
+              </div>
+            )}
+
             <div>
               <label className="block text-sm font-medium text-gray-700">
                 Fecha y Hora de Inicio
@@ -214,7 +283,7 @@ const ParkingReservation = () => {
                 value={formData.startTime}
                 onChange={handleInputChange}
                 required
-                min={new Date().toISOString().slice(0, 16)}
+                min={new Date().toDateString().slice(0, 16)}
                 className="input mt-1"
               />
             </div>
@@ -265,7 +334,7 @@ const ParkingReservation = () => {
               </button>
               <button
                 type="submit"
-                disabled={loading || !formData.startTime || !formData.endTime || !user}
+                disabled={loading || !formData.startTime || !formData.endTime || !user || (user.role === 'Admin' && !selectedUser)}
                 className="btn btn-primary"
               >
                 {loading ? 'Procesando...' : 'Confirmar Reserva'}

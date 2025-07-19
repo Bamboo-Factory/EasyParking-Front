@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { MapContainer, TileLayer, Marker, useMapEvents } from 'react-leaflet';
 import { parkingService } from '../services/api';
+import { useAuth } from '../contexts/AuthContext';
 import 'leaflet/dist/leaflet.css';
 
 // Componente para manejar los eventos del mapa
@@ -16,40 +17,24 @@ const MapEvents = ({ onPositionChange }: { onPositionChange: (position: [number,
 
 const ParkingRegister = () => {
   const navigate = useNavigate();
+  const { user } = useAuth();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [position, setPosition] = useState<[number, number]>([-12.0464, -77.0428]); // Lima por defecto
   const [formData, setFormData] = useState({
     name: '',
     address: '',
+    city: '',
     totalSpaces: '',
-    pricePerHour: '',
-    amenities: [] as string[],
+    hourlyRate: '',
+    dailyRate: '',
   });
-
-  const amenitiesOptions = [
-    'Vigilancia 24/7',
-    'Cámaras de seguridad',
-    'Techado',
-    'Acceso controlado',
-    'Iluminación',
-    'Seguridad electrónica',
-  ];
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
     setFormData(prev => ({
       ...prev,
       [name]: value
-    }));
-  };
-
-  const handleAmenityChange = (amenity: string) => {
-    setFormData(prev => ({
-      ...prev,
-      amenities: prev.amenities.includes(amenity)
-        ? prev.amenities.filter(a => a !== amenity)
-        : [...prev.amenities, amenity]
     }));
   };
 
@@ -60,17 +45,18 @@ const ParkingRegister = () => {
 
     try {
       const parkingData = {
-        ...formData,
+        name: formData.name,
+        address: formData.address,
+        city: formData.city,
         latitude: position[0],
         longitude: position[1],
         totalSpaces: parseInt(formData.totalSpaces),
-        pricePerHour: parseFloat(formData.pricePerHour),
-        availableSpaces: parseInt(formData.totalSpaces),
-        images: [], // Por ahora sin imágenes
+        hourlyRate: parseFloat(formData.hourlyRate),
+        dailyRate: parseFloat(formData.dailyRate),
       };
 
       await parkingService.registerParking(parkingData);
-      navigate('/parkings');
+      navigate('/all-parkings');
     } catch (err) {
       setError('Error al registrar el estacionamiento');
     } finally {
@@ -116,6 +102,20 @@ const ParkingRegister = () => {
 
           <div>
             <label className="block text-sm font-medium text-gray-700">
+              Ciudad
+            </label>
+            <input
+              type="text"
+              name="city"
+              value={formData.city}
+              onChange={handleInputChange}
+              required
+              className="input mt-1"
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700">
               Número de Espacios
             </label>
             <input
@@ -135,8 +135,24 @@ const ParkingRegister = () => {
             </label>
             <input
               type="number"
-              name="pricePerHour"
-              value={formData.pricePerHour}
+              name="hourlyRate"
+              value={formData.hourlyRate}
+              onChange={handleInputChange}
+              required
+              min="0"
+              step="0.01"
+              className="input mt-1"
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700">
+              Tarifa por Día (S/)
+            </label>
+            <input
+              type="number"
+              name="dailyRate"
+              value={formData.dailyRate}
               onChange={handleInputChange}
               required
               min="0"
@@ -167,25 +183,6 @@ const ParkingRegister = () => {
           <p className="mt-2 text-sm text-gray-500">
             Haz clic en el mapa para seleccionar la ubicación exacta
           </p>
-        </div>
-
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">
-            Servicios y Amenidades
-          </label>
-          <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-            {amenitiesOptions.map((amenity) => (
-              <label key={amenity} className="flex items-center space-x-2">
-                <input
-                  type="checkbox"
-                  checked={formData.amenities.includes(amenity)}
-                  onChange={() => handleAmenityChange(amenity)}
-                  className="rounded text-primary-600 focus:ring-primary-500"
-                />
-                <span className="text-sm text-gray-700">{amenity}</span>
-              </label>
-            ))}
-          </div>
         </div>
 
         {error && (

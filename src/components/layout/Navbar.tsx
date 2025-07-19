@@ -4,6 +4,8 @@ import {
   PlusCircleIcon,
   HomeIcon,
   UserIcon,
+  MagnifyingGlassIcon,
+  BuildingOfficeIcon,
 } from "@heroicons/react/24/outline";
 import { useAuth } from "../../contexts/AuthContext";
 
@@ -31,11 +33,20 @@ const Navbar = () => {
               to="/parkings"
               className="flex items-center space-x-1 text-gray-600 hover:text-primary-600"
             >
-              <MapPinIcon className="h-5 w-5" />
-              <span>Estacionamientos</span>
+              <MagnifyingGlassIcon className="h-5 w-5" />
+              <span>Búsqueda</span>
             </Link>
             {isAuthenticated ? (
               <>
+                {user?.role === 'Admin' && (
+                  <Link
+                    to="/all-parkings"
+                    className="flex items-center space-x-1 text-gray-600 hover:text-primary-600"
+                  >
+                    <BuildingOfficeIcon className="h-5 w-5" />
+                    <span>Estacionamientos</span>
+                  </Link>
+                )}
                 <Link
                   to="/register-parking"
                   className="flex items-center space-x-1 text-gray-600 hover:text-primary-600"

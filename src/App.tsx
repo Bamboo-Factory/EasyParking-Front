@@ -3,6 +3,7 @@ import { AuthProvider } from "./contexts/AuthContext";
 import Navbar from "./components/layout/Navbar";
 import Home from "./pages/Home";
 import ParkingList from "./pages/ParkingList";
+import AllParkings from "./pages/AllParkings";
 import ParkingRegister from "./pages/ParkingRegister";
 import ParkingReservation from "./pages/ParkingReservation";
 import Login from "./pages/Login";
@@ -20,6 +21,7 @@ function App() {
               <Route path="/" element={<ParkingList />} />
               <Route path="/home" element={<Home />} />
               <Route path="/parkings" element={<ParkingList />} />
+              <Route path="/all-parkings" element={<AllParkings />} />
               <Route path="/register-parking" element={<ParkingRegister />} />
               <Route path="/reservation/:id" element={<ParkingReservation />} />
               <Route path="/login" element={<Login />} />
